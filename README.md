@@ -80,23 +80,8 @@ python main.py
 
 ---
 
-## 🖼️ Sample Output
-
-![Map](visualization/sample_map.png)
-
----
-
 ## 📚 Academic Notes
 
 - Developed for: **TBL331 - Project II**  
 - Submission Deadline: June 2, 2025  
 - Presentation: June 16–27, 2025
-
----
-
-## ✅ Author
-
-**Name:** [Your Name]  
-**Student ID:** [Your ID]  
-**Email:** [Your Email]  
-**Course Instructor:** Öğr. Gör. [Instructor Name]

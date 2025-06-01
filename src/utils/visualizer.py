@@ -27,21 +27,30 @@ def plot_delivery_routes(drones, deliveries, positions, assignments, noflyzones=
 
     # Plot delivery points
     for delivery in deliveries:
-        x, y = positions[delivery.id]
+        delivery_key = f"D{delivery.id + 80}"
+        x, y = positions[delivery_key]
         ax.scatter(x, y, color='blue', label='Delivery' if delivery.id == deliveries[0].id else "")
-        ax.text(x + 0.5, y + 0.5, f"D{delivery.id - 100}", fontsize=9)
+        ax.text(x + 0.5, y + 0.5, f"D{delivery.id}", fontsize=9)
 
     # Plot drone start positions
     for drone in drones:
-        x, y = positions[drone.id]
+        drone_key = f"DR{drone.id}"
+        x, y = positions[drone_key]
         ax.scatter(x, y, color='green', marker='^', s=100, label='Drone' if drone.id == drones[0].id else "")
         ax.text(x + 0.5, y + 0.5, f"DR{drone.id}", fontsize=9)
 
     # Plot delivery routes
-    for drone_id, delivery_id in assignments:
-        dx, dy = positions[drone_id]
-        tx, ty = positions[delivery_id]
-        ax.plot([dx, tx], [dy, ty], linestyle='--', color='gray')
+    for idx, (drone_id, delivery_id) in enumerate(assignments):
+        if drone_id in positions and delivery_id in positions:
+            dx, dy = positions[drone_id]
+            tx, ty = positions[delivery_id]
+            ax.plot(
+                [dx, tx], [dy, ty],
+                linestyle='--',
+                color='orange',
+                linewidth=2,
+                label="Route" if idx == 0 else ""
+            )
 
     # Plot no-fly zones if available
     if noflyzones:
