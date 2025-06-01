@@ -27,22 +27,27 @@ class GeneticOptimizer:
             available_deliveries = deepcopy(self.deliveries)
             random.shuffle(available_deliveries)
 
-        for drone in self.drones:
-            for delivery in available_deliveries:
-                if self.csp.is_delivery_valid(drone, delivery, self.current_time, verbose=False):
-                    solution.append((drone.id, delivery.id))
-                    available_deliveries.remove(delivery)
-                    break
+            for drone in self.drones:
+                for delivery in available_deliveries:
+                    if self.csp.is_delivery_valid(drone, delivery, self.current_time, verbose=False):
+                        solution.append((drone.id, delivery.id))
+                        available_deliveries.remove(delivery)
+                        break
             population.append(solution)
         return population
 
     def fitness(self, solution):
-        total_cost = 0
-        seen_drones = set()  # ✅ tanımlandı
+        """
+        Fitness = (successful_deliveries * 100) - (energy_cost * penalty_factor)
+        """
+        total_energy = 0
+        seen_drones = set()
+        mAh_per_meter = 5       # Energy consumption per meter
+        penalty_factor = 0.1    # Penalty per mAh consumed
 
         for drone_id, delivery_id in solution:
             if drone_id in seen_drones:
-                return 0
+                return 0  # A drone assigned more than once
             seen_drones.add(drone_id)
 
             drone = next(d for d in self.drones if d.id == drone_id)
@@ -51,10 +56,16 @@ class GeneticOptimizer:
             if not self.csp.is_delivery_valid(drone, delivery, self.current_time, verbose=False):
                 return 0
 
-            cost, _ = self.astar.find_path(f"DR{drone_id}", f"D{delivery_id + 80}")
-            total_cost += cost
+            from_id = f"DR{drone.id}"
+            to_id = f"D{delivery.id + 80}"
+            cost, _ = self.astar.find_path(from_id, to_id)
 
-        return len(solution) * 100 - total_cost
+            energy_used = cost * mAh_per_meter
+            total_energy += energy_used
+
+        reward = len(solution) * 100
+        penalty = total_energy * penalty_factor
+        return reward - penalty
 
     def crossover(self, parent1, parent2):
         mid = len(parent1) // 2

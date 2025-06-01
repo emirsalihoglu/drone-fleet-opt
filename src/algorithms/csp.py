@@ -3,6 +3,7 @@ from shapely.geometry import LineString, Polygon
 from src.models.delivery import Delivery
 from src.models.noflyzone import NoFlyZone
 
+
 class CSP:
     """
     Enforces constraints for assigning deliveries to drones.
@@ -12,6 +13,7 @@ class CSP:
         self.drones = drones
         self.deliveries = deliveries
         self.noflyzones = noflyzones
+        self.mAh_per_meter = 5  # Energy consumption per meter
 
     def is_delivery_valid(self, drone, delivery: Delivery, current_time: str, verbose=False) -> bool:
         """
@@ -19,6 +21,7 @@ class CSP:
         - max_weight is not exceeded
         - no-fly zones are avoided
         - time window is respected
+        - battery capacity is sufficient for the path
         """
         if delivery.weight > drone.max_weight:
             if verbose:
@@ -33,6 +36,15 @@ class CSP:
         if not self.in_time_window(delivery.time_window, current_time):
             if verbose:
                 print(f"[X] Zaman Uyuşmazlığı → Şu an: {current_time}, Delivery#{delivery.id} için geçerli zaman aralığı: {delivery.time_window[0]} – {delivery.time_window[1]}")
+            return False
+
+        # Battery capacity check
+        distance = self.euclidean_distance(drone.start_pos, delivery.pos)
+        required_energy = distance * self.mAh_per_meter
+
+        if required_energy > drone.remaining_battery:
+            if verbose:
+                print(f"[X] Batarya Yetersiz → Drone#{drone.id}: {drone.remaining_battery}mAh < Gerekli: {int(required_energy)}mAh")
             return False
 
         if verbose:
@@ -65,3 +77,10 @@ class CSP:
                 return True
 
         return False
+
+    @staticmethod
+    def euclidean_distance(pos1: tuple, pos2: tuple) -> float:
+        """
+        Calculates Euclidean distance between two coordinate points.
+        """
+        return ((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2) ** 0.5

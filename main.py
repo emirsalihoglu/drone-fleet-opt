@@ -30,14 +30,15 @@ def main():
                 cost = graph.euclidean_distance(positions[i], positions[j])
                 graph.add_edge(i, j, cost)
 
-    # 4. Run optimization
+    # 4. Run optimization with verbose=True to see constraint explanations
     optimizer = GeneticOptimizer(
         drones=drones,
         deliveries=deliveries,
         noflyzones=noflyzones,
         graph=graph,
         positions=positions,
-        current_time="00:45"  # HH:MM format
+        current_time="00:45",  # HH:MM format
+        verbose=True           # ✅ Detaylı log için aktif edildi
     )
 
     raw_solution = optimizer.run()
