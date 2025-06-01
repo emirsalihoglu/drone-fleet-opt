@@ -19,7 +19,7 @@ class GeneticOptimizer:
         self.verbose = verbose
         self.csp = CSP(drones, deliveries, noflyzones)
         self.astar = AStar(graph, positions)
-        self.debug_print_limit = 10  # ✅ Log sınırı
+        self.debug_print_limit = 10
         self.debug_print_count = 0
 
     def generate_initial_population(self, size=10):
@@ -40,13 +40,14 @@ class GeneticOptimizer:
 
     def fitness(self, solution):
         """
-        Fitness = (successful_deliveries * 100) - (energy_cost * penalty_factor)
-        Optionally log travel time using drone speed.
+        Fitness = (total_priority_score) - (energy_cost * penalty_factor)
         """
         total_energy = 0
+        total_priority_score = 0
         seen_drones = set()
         mAh_per_meter = 5
         penalty_factor = 0.1
+        priority_weight = 10  # ⬅️ Her priority puanı 10 ile çarpılıyor
 
         for drone_id, delivery_id in solution:
             if drone_id in seen_drones:
@@ -65,20 +66,19 @@ class GeneticOptimizer:
 
             energy_used = cost * mAh_per_meter
             total_energy += energy_used
+            total_priority_score += delivery.priority * priority_weight
 
             if drone.speed > 0:
                 travel_time = cost / drone.speed
             else:
                 travel_time = float("inf")
 
-            # ✅ Sadece sınırlı sayıda log yazdır
             if self.verbose and self.debug_print_count < self.debug_print_limit:
                 print(f"Drone#{drone.id} → Delivery#{delivery.id} | Distance: {cost:.2f} m | Speed: {drone.speed} m/s | Time: {travel_time:.2f} sec")
                 self.debug_print_count += 1
 
-        reward = len(solution) * 100
         penalty = total_energy * penalty_factor
-        return reward - penalty
+        return total_priority_score - penalty
 
     def crossover(self, parent1, parent2):
         mid = len(parent1) // 2
@@ -115,7 +115,6 @@ class GeneticOptimizer:
 
         best = max(population, key=self.fitness)
 
-        # Final çözüm için detaylı log
         if self.verbose:
             print("\n[!] En iyi çözüme ait eşleşme detayları:")
             for drone_id, delivery_id in best:
