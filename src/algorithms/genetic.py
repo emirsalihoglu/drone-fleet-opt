@@ -19,6 +19,8 @@ class GeneticOptimizer:
         self.verbose = verbose
         self.csp = CSP(drones, deliveries, noflyzones)
         self.astar = AStar(graph, positions)
+        self.debug_print_limit = 10  # ✅ Log sınırı
+        self.debug_print_count = 0
 
     def generate_initial_population(self, size=10):
         population = []
@@ -39,15 +41,16 @@ class GeneticOptimizer:
     def fitness(self, solution):
         """
         Fitness = (successful_deliveries * 100) - (energy_cost * penalty_factor)
+        Optionally log travel time using drone speed.
         """
         total_energy = 0
         seen_drones = set()
-        mAh_per_meter = 5       # Energy consumption per meter
-        penalty_factor = 0.1    # Penalty per mAh consumed
+        mAh_per_meter = 5
+        penalty_factor = 0.1
 
         for drone_id, delivery_id in solution:
             if drone_id in seen_drones:
-                return 0  # A drone assigned more than once
+                return 0
             seen_drones.add(drone_id)
 
             drone = next(d for d in self.drones if d.id == drone_id)
@@ -62,6 +65,16 @@ class GeneticOptimizer:
 
             energy_used = cost * mAh_per_meter
             total_energy += energy_used
+
+            if drone.speed > 0:
+                travel_time = cost / drone.speed
+            else:
+                travel_time = float("inf")
+
+            # ✅ Sadece sınırlı sayıda log yazdır
+            if self.verbose and self.debug_print_count < self.debug_print_limit:
+                print(f"Drone#{drone.id} → Delivery#{delivery.id} | Distance: {cost:.2f} m | Speed: {drone.speed} m/s | Time: {travel_time:.2f} sec")
+                self.debug_print_count += 1
 
         reward = len(solution) * 100
         penalty = total_energy * penalty_factor
