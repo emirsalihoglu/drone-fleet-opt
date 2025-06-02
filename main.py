@@ -37,7 +37,7 @@ def main():
         noflyzones=noflyzones,
         graph=graph,
         positions=positions,
-        current_time="00:45",
+        current_time="00:30",
         verbose=True
     )
 
